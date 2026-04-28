@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ch13_2 — 即時影像 + 手部辨識</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #000; }
+    canvas { display: block; }
+
+    /* ── 按鈕共用樣式 ── */
+    #share-btn, #save-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: #fff;
+      background: rgba(41, 123, 178, 0.65);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: background .2s, transform .15s;
+    }
+    #share-btn {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+    }
+    #share-btn:hover, #save-btn:hover {
+      background: rgba(41, 123, 178, 0.9);
+    }
+
+    /* ── QR Modal ── */
+    #qr-modal {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(8, 20, 40, 0.65);
+      backdrop-filter: blur(8px);
+    }
+    #qr-modal.hidden { display: none; }
+    .modal-box {
+      background: #fff; border-radius: 20px;
+      padding: 30px 26px 22px; width: min(330px, 90vw);
+      text-align: center; position: relative; color: #1a2a3a;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    #close-modal {
+      position: absolute; top: 11px; right: 13px;
+      width: 26px; height: 26px; border: none;
+      background: #eef2f7; border-radius: 50%;
+      cursor: pointer; font-size: 13px; color: #777;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #close-modal:hover { background: #dde4ef; }
+    .modal-box h2 { font-size: 17px; color: #297BB2; margin-bottom: 4px; }
+    .modal-sub { font-size: 11px; color: #888; margin-bottom: 16px; }
+    #qr-wrapper {
+      background: #f4f8fc; border-radius: 12px;
+      padding: 12px; margin-bottom: 12px;
+      border: 2px solid #dde8f4;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 200px;
+    }
+    .url-row {
+      display: flex; gap: 8px; align-items: flex-start;
+      background: #f0f4f9; border-radius: 8px; padding: 8px 10px; text-align: left;
+    }
+    .url-badge {
+      font-size: 10px; background: #297BB2; color: #fff;
+      padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+    }
+    #url-display { font-size: 11px; color: #445; word-break: break-all; line-height: 1.5; }
+
+    /* ── 手部圖例 ── */
+    #hand-legend {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 500;
+      background: rgba(0,0,0,0.45);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      line-height: 1.9;
+      pointer-events: none;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- QR Code Modal -->
+  <div id="qr-modal" class="hidden">
+    <div class="modal-box">
+      <button id="close-modal">✕</button>
+      <div style="font-size:26px;margin-bottom:6px">🔗</div>
+      <h2>在其他裝置開啟</h2>
+      <p class="modal-sub">掃描後即可在該裝置顯示其鏡頭</p>
+      <div id="qr-wrapper"><div id="qr-code"></div></div>
+      <div class="url-row">
+        <span class="url-badge">URL</span>
+        <p id="url-display"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 手部顏色圖例 -->
+  <div id="hand-legend">
+    <div><span class="legend-dot" style="background:#ff00dc"></span>左手 Left Hand</div>
+    <div><span class="legend-dot" style="background:#ffdc00"></span>右手 Right Hand</div>
+    <div style="margin-top:4px;font-size:10px;opacity:0.6">指尖 → 激光 + 粒子</div>
+  </div>
+
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <!-- ml5.js (HandPose) -->
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script src="sketch.js"></script>
+</body>
+</html>
