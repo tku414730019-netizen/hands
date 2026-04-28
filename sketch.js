@@ -107,7 +107,6 @@ function draw() {
   pulseT += 0.035;
 
   if (!camReady) { drawWaiting(); return; }
-
   if (capture.elt?.paused) { try { capture.play(); } catch(e){} }
 
   const BOX_W = width  * 0.70;
@@ -120,14 +119,16 @@ function draw() {
   const { x, y, w, h } = fitKeepRatio(vw, vh, BOX_W, BOX_H, BOX_X, BOX_Y);
   lastBox = { x: int(x), y: int(y), w: int(w), h: int(h) };
 
-  span = int(map(mouseX, 0, width, 8, 40));
-
   drawGlow(x, y, w, h);
 
-  // 核心渲染
+  // 1. 先畫影像
   if (mode === "0") {
     if (isMirror) {
-      push(); translate(x + w, y); scale(-1, 1); image(capture, 0, 0, w, h); pop();
+      push(); 
+      translate(x + w, y); 
+      scale(-1, 1); 
+      image(capture, 0, 0, w, h); 
+      pop();
     } else {
       image(capture, x, y, w, h);
     }
@@ -139,7 +140,7 @@ function draw() {
   updateTips();
   drawTips();
 
-  // 手部骨架 + 特效
+  // 3. 繪製手部 (mapToCanvas 會處理內部的鏡像對位)
   if (hands.length > 0) {
     for (let hand of hands) {
       if (hand.confidence > 0.1) {
@@ -151,9 +152,9 @@ function draw() {
 
         for (let i = 0; i < hand.keypoints.length; i++) {
           const kp  = hand.keypoints[i];
-          const cx  = mapToCanvas(kp.x, kp.y, x, y, w, h, vw, vh);
+          const cx  = mapToCanvas(kp.x, kp.y, x, y, w, h, vw, vh); // ✅ 關鍵修正
           const isTip = TIP_INDICES.includes(i);
-          noStroke();
+          
           if (isTip) {
             drawGlowCircle(cx.px, cx.py, 18, glowCol, baseCol);
             spawnTipEffect(cx.px, cx.py, hand, i, baseCol, vw, vh, x, y, w, h);
@@ -162,6 +163,7 @@ function draw() {
             }
           } else {
             fill(red(baseCol), green(baseCol), blue(baseCol), 200);
+            noStroke();
             circle(cx.px, cx.py, 10);
           }
         }
@@ -175,7 +177,15 @@ function draw() {
 
 // ── 關節座標映射 ───────────────────────────────────────────
 function mapToCanvas(kpx, kpy, bx, by, bw, bh, vw, vh) {
-  return { px: bx + (kpx / vw) * bw, py: by + (kpy / vh) * bh };
+  let finalX = kpx;
+  // 如果開啟了手動鏡像，X 座標要反過來計算
+  if (isMirror) {
+    finalX = vw - kpx;
+  }
+  return { 
+    px: bx + (finalX / vw) * bw, 
+    py: by + (kpy / vh) * bh 
+  };
 }
 
 // ── 骨架連線定義 ───────────────────────────────────────────
