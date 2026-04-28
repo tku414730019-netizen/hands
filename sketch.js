@@ -29,7 +29,7 @@ const KNUCKLE_BELOW  = [3, 7, 11, 15, 19];
 
 // ── preload：初始化 HandPose 模型 ──────────────────────────
 function preload() {
-  handPose = ml5.handPose({ flipped: true });
+  handPose = ml5.handPose();
 }
 
 function gotHands(results) {
@@ -114,8 +114,8 @@ function draw() {
   const BOX_X = (width  - BOX_W) / 2;
   const BOX_Y = (height - BOX_H) / 2;
 
-  const vw = capture.elt?.videoWidth  || 640;
-  const vh = capture.elt?.videoHeight || 480;
+  const vw = capture.width;
+  const vh = capture.height;
   const { x, y, w, h } = fitKeepRatio(vw, vh, BOX_W, BOX_H, BOX_X, BOX_Y);
   lastBox = { x: int(x), y: int(y), w: int(w), h: int(h) };
 
@@ -125,9 +125,7 @@ function draw() {
   if (mode === "0") {
     if (isMirror) {
       push(); 
-      translate(x + w, y); 
-      scale(-1, 1); 
-      image(capture, 0, 0, w, h); 
+      image(capture, x, y, w, h);
       pop();
     } else {
       image(capture, x, y, w, h);
@@ -156,7 +154,7 @@ function draw() {
           const isTip = TIP_INDICES.includes(i);
           
           if (isTip) {
-            drawGlowCircle(cx.px, cx.py, 18, glowCol, baseCol);
+            
             spawnTipEffect(cx.px, cx.py, hand, i, baseCol, vw, vh, x, y, w, h);
             if (effectMode === 'laser' || effectMode === 'all') {
               drawLaser(hand, i, x, y, w, h, vw, vh, glowCol);
@@ -178,10 +176,11 @@ function draw() {
 // ── 關節座標映射 ───────────────────────────────────────────
 function mapToCanvas(kpx, kpy, bx, by, bw, bh, vw, vh) {
   let finalX = kpx;
-  // 如果開啟了手動鏡像，X 座標要反過來計算
+
   if (isMirror) {
     finalX = vw - kpx;
   }
+
   return { 
     px: bx + (finalX / vw) * bw, 
     py: by + (kpy / vh) * bh 
