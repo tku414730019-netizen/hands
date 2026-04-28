@@ -171,6 +171,11 @@ function draw() {
 
   push(); blendMode(MULTIPLY); image(noiseTexture, 0, 0, width, height); pop();
   drawUIElements(x, y, w, h);
+
+  // 左上角顯示學號和名字
+  fill(255);
+  textSize(18);
+  text("414730019王曜嘉", windowWidth/2, 50);
 }
 
 // ── 關節座標映射 ───────────────────────────────────────────
